@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Thời Tiết & Đồng Hồ Thế Giới | sgpho.com</title>
+
+
+<link rel="icon" href="#" type="image/x-icon">
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#050810;
+  --bg1:#090d18;
+  --glass:rgba(255,255,255,.042);
+  --glass-h:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.08);
+  --border-h:rgba(255,255,255,.18);
+  --text:#e8eaf6;
+  --muted:#5c6480;
+  --accent:#4f8ef7;
+  --accent2:#38bdf8;
+  --warm:#fb923c;
+  --cool:#818cf8;
+  --green:#34d399;
+  --yellow:#fbbf24;
+  --red:#f87171;
+  --radius:20px;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg0);
+  color:var(--text);
+  font-family:'Roboto','Helvetica Neue',Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── AURORA BACKGROUND ── */
+.aurora{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.aurora-blob{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;
+  animation:drift 18s ease-in-out infinite alternate;
+}
+.ab1{width:600px;height:400px;background:radial-gradient(#1d4ed8,transparent);top:-100px;left:-100px;animation-delay:0s;}
+.ab2{width:500px;height:500px;background:radial-gradient(#0e7490,transparent);top:20%;right:-120px;animation-delay:-6s;}
+.ab3{width:400px;height:600px;background:radial-gradient(#7c3aed,transparent);bottom:-100px;left:30%;animation-delay:-12s;}
+@keyframes drift{
+  from{transform:translate(0,0) scale(1);}
+  to{transform:translate(40px,30px) scale(1.08);}
+}
+
+/* ── HEADER ── */
+header{
+  position:relative;z-index:2;
+  padding:40px 28px 28px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  border-bottom:1px solid var(--border);
+}
+.logo-row{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+.logo-icon{
+  width:48px;height:48px;border-radius:14px;
+  background:linear-gradient(135deg,#1d4ed8,#0ea5e9);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 28px rgba(14,165,233,.4);
+}
+.logo-icon svg{fill:#fff;width:24px;height:24px;}
+h1{
+  font-size:clamp(1.6rem,4vw,2.6rem);
+  font-weight:700;letter-spacing:-.02em;
+  background:linear-gradient(135deg,#fff 0%,#93c5fd 50%,#38bdf8 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.tagline{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+/* ── SEARCH BAR ── */
+.search-wrap{
+  position:relative;z-index:2;
+  max-width:580px;margin:24px auto 0;width:100%;padding:0 20px;
+}
+.search-inner{
+  display:flex;gap:8px;
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:14px;padding:10px 14px;
+  backdrop-filter:blur(12px);transition:border-color .2s;
+}
+.search-inner:focus-within{border-color:var(--accent);}
+.search-inner input{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--text);font-family:'Roboto','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.9rem;
+}
+.search-inner input::placeholder{color:var(--muted);}
+.search-inner button{
+  background:linear-gradient(135deg,#1d4ed8,#0ea5e9);border:none;
+  border-radius:9px;padding:7px 18px;cursor:pointer;color:#fff;
+  font-family:'Roboto','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.75rem;
+  font-weight:600;letter-spacing:.06em;transition:opacity .2s;white-space:nowrap;
+}
+.search-inner button:hover{opacity:.85;}
+.search-hint{
+  font-size:.64rem;color:var(--muted);letter-spacing:.1em;
+  text-align:center;margin-top:8px;
+}
+/* Autocomplete dropdown */
+.autocomplete{
+  position:absolute;top:calc(100% - 6px);left:20px;right:20px;z-index:99;
+  background:#111827;border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;display:none;
+  box-shadow:0 16px 48px rgba(0,0,0,.6);
+}
+.autocomplete.show{display:block;}
+.ac-item{
+  padding:11px 16px;cursor:pointer;font-size:.84rem;
+  display:flex;align-items:center;gap:10px;
+  transition:background .15s;
+}
+.ac-item:hover{background:var(--glass-h);}
+.ac-flag{font-size:1.2rem;}
+.ac-name{font-weight:500;color:var(--text);}
+.ac-sub{font-size:.72rem;color:var(--muted);margin-left:auto;}
+
+/* ── MAIN GRID ── */
+main{
+  position:relative;z-index:1;
+  max-width:1280px;margin:0 auto;
+  padding:36px 20px 72px;
+}
+
+/* ── CARDS GRID ── */
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+}
+
+/* ── WEATHER CARD ── */
+.wcard{
+  background:var(--glass);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px 22px 18px;
+  backdrop-filter:blur(16px);
+  position:relative;overflow:hidden;
+  cursor:default;
+  transition:transform .25s,border-color .25s,box-shadow .25s;
+  animation:cardIn .45s ease both;
+}
+.wcard:hover{
+  transform:translateY(-4px);
+  border-color:var(--border-h);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* card glow tint based on weather */
+.wcard::before{
+  content:'';position:absolute;inset:0;border-radius:var(--radius);
+  background:var(--card-tint,transparent);opacity:.08;pointer-events:none;
+  transition:background .5s;
+}
+
+/* remove btn */
+.remove-btn{
+  position:absolute;top:12px;right:12px;
+  width:22px;height:22px;border-radius:50%;
+  border:1px solid var(--border);background:none;
+  color:var(--muted);font-size:.7rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .2s;
+}
+.wcard:hover .remove-btn{opacity:1;}
+.remove-btn:hover{background:rgba(248,113,113,.15);border-color:var(--red);color:var(--red);}
+
+/* card top row */
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px;}
+.city-info{}
+.city-name{font-size:1.05rem;font-weight:600;letter-spacing:-.01em;color:#fff;line-height:1.2;}
+.country-name{font-size:.68rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+.weather-emoji{font-size:2.6rem;line-height:1;flex-shrink:0;}
+
+/* clock */
+.clock{
+  font-family:'Roboto Mono',monospace;
+  font-size:2rem;font-weight:700;letter-spacing:.04em;
+  color:#fff;line-height:1;margin-bottom:2px;
+}
+.clock-date{font-size:.7rem;color:var(--muted);letter-spacing:.1em;}
+.timezone-badge{
+  display:inline-block;margin-top:6px;padding:2px 8px;
+  border-radius:6px;border:1px solid var(--border);
+  font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+}
+
+/* timezone info row */
+.tz-info-row{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;
+}
+.tz-pill{
+  display:inline-block;padding:2px 9px;border-radius:6px;
+  font-size:.6rem;font-weight:500;letter-spacing:.08em;
+  border:1px solid var(--border);
+  font-family:'Roboto Mono',monospace;
+}
+.tz-offset{color:var(--accent2);border-color:rgba(56,189,248,.25);background:rgba(56,189,248,.06);}
+.tz-abbr{ color:var(--muted); border-color:var(--border);background:rgba(255,255,255,.03);}
+.tz-same{  color:var(--green); border-color:rgba(52,211,153,.25);background:rgba(52,211,153,.06);}
+.tz-ahead{ color:var(--yellow);border-color:rgba(251,191,36,.25); background:rgba(251,191,36,.06);}
+.tz-behind{color:var(--cool);  border-color:rgba(129,140,248,.25);background:rgba(129,140,248,.06);}
+
+/* divider */
+.card-divider{height:1px;background:var(--border);margin:14px 0;}
+
+/* weather row */
+.weather-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.temp-big{
+  font-family:'Roboto Mono',monospace;
+  font-size:2.4rem;font-weight:700;letter-spacing:-.02em;
+  line-height:1;
+}
+.temp-big.hot{color:#fb923c;}
+.temp-big.warm{color:#fbbf24;}
+.temp-big.mild{color:var(--green);}
+.temp-big.cool{color:var(--accent2);}
+.temp-big.cold{color:#818cf8;}
+
+.weather-details{display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
+.wd-row{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);}
+.wd-row span:last-child{color:var(--text);font-weight:500;}
+
+/* weather desc */
+.weather-desc{
+  font-size:.76rem;color:var(--muted);margin-top:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.weather-desc::before{content:'';display:block;width:3px;height:3px;border-radius:50%;background:var(--muted);}
+
+/* mini forecast */
+.mini-forecast{
+  display:flex;gap:6px;margin-top:14px;overflow:hidden;
+}
+.mf-item{
+  flex:1;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:10px;padding:6px 4px;text-align:center;min-width:0;
+}
+.mf-hour{font-size:.58rem;color:var(--muted);letter-spacing:.08em;}
+.mf-icon{font-size:.9rem;margin:3px 0;}
+.mf-temp{font-size:.68rem;font-weight:600;color:var(--text);}
+
+/* loading state */
+.card-loading{
+  display:flex;align-items:center;justify-content:center;
+  height:120px;color:var(--muted);font-size:.78rem;letter-spacing:.12em;
+}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(79,142,247,.3);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:rot .7s linear infinite;vertical-align:middle;margin-right:7px;}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── STATUS BAR (sticky) ── */
+.status-bar{
+  position:sticky;top:0;z-index:10;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  gap:8px 18px;padding:9px 24px;
+  background:rgba(5,8,16,.85);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;
+  animation:livep 2.2s ease infinite;}
+@keyframes livep{
+  0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.4)}
+  50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}
+}
+#ts-bar,#cd-bar{color:var(--accent2);font-weight:600;}
+.ref-btn{
+  background:none;border:1px solid var(--border);border-radius:6px;
+  padding:4px 12px;cursor:pointer;color:var(--muted);
+  font-family:'Roboto','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.62rem;
+  letter-spacing:.12em;text-transform:uppercase;transition:all .2s;
+}
+.ref-btn:hover{border-color:var(--accent);color:var(--accent2);}
+.ref-btn.spin-btn svg{animation:rot .5s linear infinite;}
+.ref-btn svg{width:10px;height:10px;fill:currentColor;vertical-align:middle;margin-right:4px;}
+
+/* ── QUICK ADD CHIPS ── */
+.quick-add{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;
+}
+.qa-chip{
+  padding:7px 14px;border-radius:100px;border:1px solid var(--border);
+  background:var(--glass);color:var(--muted);font-size:.72rem;letter-spacing:.1em;
+  cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);
+  display:flex;align-items:center;gap:6px;
+}
+.qa-chip:hover{border-color:var(--accent);color:var(--accent2);background:rgba(79,142,247,.08);}
+.qa-chip.active{border-color:var(--accent);color:var(--accent2);background:rgba(79,142,247,.12);}
+
+/* ── NAV MENU ── */
+.site-nav{
+  position:relative;z-index:3;
+  display:flex;align-items:center;justify-content:center;
+  gap:6px;padding:10px 24px;
+  background:rgba(5,8,16,.75);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-link{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 14px;border-radius:8px;
+  border:1px solid transparent;
+  color:var(--muted);font-size:.72rem;font-weight:500;letter-spacing:.08em;
+  text-decoration:none;text-transform:uppercase;
+  transition:all .2s;
+}
+.nav-link:hover{
+  color:var(--accent2);border-color:rgba(56,189,248,.3);
+  background:rgba(56,189,248,.06);
+}
+.nav-link.active{
+  color:#fff;border-color:var(--accent);
+  background:rgba(79,142,247,.12);
+}
+.nav-sep{color:var(--border);font-size:.8rem;}
+
+/* ── FOOTER ── */
+footer{
+  position:relative;z-index:1;text-align:center;
+  padding:16px 24px 32px;border-top:1px solid var(--border);
+  font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(92,100,128,.5);
+}
+footer a{color:var(--accent);text-decoration:none;opacity:.7;}
+footer a:hover{opacity:1;}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+
+/* Tablet — 2 columns max */
+@media(max-width:900px){
+  .cards-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+  main{padding:24px 16px 60px;}
+  h1{font-size:clamp(1.3rem,5vw,2rem);}
+  .temp-big{font-size:2.1rem;}
+}
+
+/* Large phone — 2 columns still, tighter */
+@media(max-width:640px){
+  .cards-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .wcard{padding:16px 14px 14px;}
+  .clock{font-size:1.45rem;}
+  .temp-big{font-size:1.8rem;}
+  .weather-emoji{font-size:2rem;}
+  .city-name{font-size:.95rem;}
+  header{padding:28px 16px 20px;}
+  .logo-row{gap:10px;}
+  .logo-icon{width:40px;height:40px;border-radius:11px;}
+  .logo-icon svg{width:20px;height:20px;}
+  .search-wrap{padding:0 14px;}
+  .status-bar{padding:8px 14px;gap:6px 12px;font-size:.6rem;}
+  .quick-add{gap:6px;}
+  .qa-chip{font-size:.65rem;padding:5px 11px;}
+  main{padding:20px 12px 52px;}
+}
+
+/* Small phone — single column */
+@media(max-width:400px){
+  .cards-grid{grid-template-columns:1fr;}
+  .clock{font-size:1.6rem;}
+  .temp-big{font-size:2rem;}
+  .wcard{padding:18px 16px 14px;}
+  h1{font-size:1.25rem;}
+  .tagline{font-size:.6rem;letter-spacing:.14em;}
+  .site-nav{padding:8px 12px;gap:4px;}
+  .nav-link{padding:4px 10px;font-size:.65rem;}
+  .status-bar{flex-direction:column;gap:4px;padding:8px 12px;}
+  .mini-forecast{gap:4px;}
+  .mf-item{padding:5px 2px;}
+  .mf-hour{font-size:.52rem;}
+  .mf-temp{font-size:.62rem;}
+}
+
+/* Landscape phone */
+@media(max-height:500px) and (orientation:landscape){
+  header{padding:16px 20px 12px;}
+  .logo-row{margin-bottom:4px;}
+  .search-wrap{margin-top:12px;}
+  main{padding:16px 16px 40px;}
+}
+</style>
+</head>
+<body>
+<div class="aurora">
+  <div class="aurora-blob ab1"></div>
+  <div class="aurora-blob ab2"></div>
+  <div class="aurora-blob ab3"></div>
+</div>
+
+<nav class="site-nav">
+  <a class="nav-link" href="https://sgpho.com" target="_blank">🍋 sgpho.com</a>
+  <span class="nav-sep">·</span>
+  <a class="nav-link active" href="https://dongho.sgpho.com" target="_blank">🕐 dongho.sgpho.com</a>
+</nav>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+    </div>
+    <h1>Thời Tiết & Đồng Hồ Thế Giới</h1>
+  </div>
+  <p class="tagline">Nhiệt độ · Thời tiết · Múi giờ · Vị trí thực · Cập nhật mỗi 60 giây</p>
+</header>
+
+<div class="search-wrap">
+  <div class="search-inner">
+    <input type="text" id="search-input" placeholder="Tìm thành phố... (vd: Tokyo, Paris, New York)" autocomplete="off"/>
+    <button onclick="searchCity()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:middle;margin-right:5px"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      Thêm
+    </button>
+  </div>
+  <div class="autocomplete" id="autocomplete"></div>
+  <p class="search-hint">💡 Nhấn 📍 để thêm vị trí của bạn · Hoặc chọn nhanh bên dưới</p>
+</div>
+
+<div class="status-bar">
+  <div class="live-dot"></div>
+  <span>Cập nhật: <strong id="ts-bar">--:--:--</strong></span>
+  <span>·</span>
+  <span>Làm mới sau <strong id="cd-bar">60</strong>s</span>
+  <span>·</span>
+  <button class="ref-btn" id="ref-btn" onclick="refreshAll()">
+    <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    Làm mới
+  </button>
+</div>
+
+<main>
+  <div class="quick-add" id="quick-add"></div>
+  <div class="cards-grid" id="cards-grid"></div>
+</main>
+
+<footer>
+  Thời tiết: <a href="https://open-meteo.com" target="_blank">open-meteo.com</a>
+  &nbsp;·&nbsp; Múi giờ: Intl API &nbsp;·&nbsp; Không cần API key
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════
+const DEFAULT_CITIES = [
+  { name:'Phú Yên',         country:'Việt Nam',  flag:'🇻🇳', lat:13.0882,  lon:109.0928, tz:'Asia/Ho_Chi_Minh' },
+  { name:'TP. Hồ Chí Minh', country:'Việt Nam',  flag:'🇻🇳', lat:10.8231,  lon:106.6297, tz:'Asia/Ho_Chi_Minh' },
+  { name:'Hà Nội',          country:'Việt Nam',  flag:'🇻🇳', lat:21.0285,  lon:105.8542, tz:'Asia/Ho_Chi_Minh' },
+  { name:'Đà Nẵng',         country:'Việt Nam',  flag:'🇻🇳', lat:16.0544,  lon:108.2022, tz:'Asia/Ho_Chi_Minh' },
+  { name:'Tokyo',            country:'Nhật Bản',  flag:'🇯🇵', lat:35.6762,  lon:139.6503, tz:'Asia/Tokyo' },
+  { name:'Bangkok',          country:'Thái Lan',  flag:'🇹🇭', lat:13.7563,  lon:100.5018, tz:'Asia/Bangkok' },
+  { name:'Singapore',        country:'Singapore', flag:'🇸🇬', lat:1.3521,   lon:103.8198, tz:'Asia/Singapore' },
+  { name:'London',           country:'Anh',       flag:'🇬🇧', lat:51.5074,  lon:-0.1278,  tz:'Europe/London' },
+  { name:'New York',         country:'Mỹ',        flag:'🇺🇸', lat:40.7128,  lon:-74.0060, tz:'America/New_York' },
+  { name:'Paris',            country:'Pháp',      flag:'🇫🇷', lat:48.8566,  lon:2.3522,   tz:'Europe/Paris' },
+  { name:'Seoul',            country:'Hàn Quốc',  flag:'🇰🇷', lat:37.5665,  lon:126.9780, tz:'Asia/Seoul' },
+  { name:'Sydney',           country:'Úc',        flag:'🇦🇺', lat:-33.8688, lon:151.2093, tz:'Australia/Sydney' },
+  { name:'Dubai',            country:'UAE',       flag:'🇦🇪', lat:25.2048,  lon:55.2708,  tz:'Asia/Dubai' },
+  { name:'Toronto',          country:'Canada',    flag:'🇨🇦', lat:43.6532,  lon:-79.3832, tz:'America/Toronto' },
+  { name:'Vancouver',        country:'Canada',    flag:'🇨🇦', lat:49.2827,  lon:-123.1207,tz:'America/Vancouver' },
+  { name:'Moscow',           country:'Nga',       flag:'🇷🇺', lat:55.7558,  lon:37.6173,  tz:'Europe/Moscow' },
+  { name:'St. Petersburg',   country:'Nga',       flag:'🇷🇺', lat:59.9311,  lon:30.3609,  tz:'Europe/Moscow' },
+  { name:'Jakarta',          country:'Indonesia', flag:'🇮🇩', lat:-6.2088,  lon:106.8456, tz:'Asia/Jakarta' },
+  { name:'Bali',             country:'Indonesia', flag:'🇮🇩', lat:-8.4095,  lon:115.1889, tz:'Asia/Makassar' },
+  { name:'New Delhi',        country:'Ấn Độ',     flag:'🇮🇳', lat:28.6139,  lon:77.2090,  tz:'Asia/Kolkata' },
+  { name:'Mumbai',           country:'Ấn Độ',     flag:'🇮🇳', lat:19.0760,  lon:72.8777,  tz:'Asia/Kolkata' },
+  { name:'Berlin',           country:'Đức',       flag:'🇩🇪', lat:52.5200,  lon:13.4050,  tz:'Europe/Berlin' },
+  { name:'Munich',           country:'Đức',       flag:'🇩🇪', lat:48.1351,  lon:11.5820,  tz:'Europe/Berlin' },
+];
+
+const SEARCH_DB = [
+  ...DEFAULT_CITIES,
+  { name:'Osaka',       country:'Nhật Bản',  flag:'🇯🇵', lat:34.6937,  lon:135.5023, tz:'Asia/Tokyo' },
+  { name:'Beijing',     country:'Trung Quốc',flag:'🇨🇳', lat:39.9042,  lon:116.4074, tz:'Asia/Shanghai' },
+  { name:'Shanghai',    country:'Trung Quốc',flag:'🇨🇳', lat:31.2304,  lon:121.4737, tz:'Asia/Shanghai' },
+  { name:'Berlin',      country:'Đức',       flag:'🇩🇪', lat:52.5200,  lon:13.4050,  tz:'Europe/Berlin' },
+  { name:'Montreal',    country:'Canada',    flag:'🇨🇦', lat:45.5017,  lon:-73.5673, tz:'America/Toronto' },
+  { name:'Calgary',     country:'Canada',    flag:'🇨🇦', lat:51.0447,  lon:-114.0719,tz:'America/Edmonton' },
+  { name:'Vladivostok', country:'Nga',       flag:'🇷🇺', lat:43.1056,  lon:131.8735, tz:'Asia/Vladivostok' },
+  { name:'Surabaya',    country:'Indonesia', flag:'🇮🇩', lat:-7.2575,  lon:112.7521, tz:'Asia/Jakarta' },
+  { name:'Medan',       country:'Indonesia', flag:'🇮🇩', lat:3.5952,   lon:98.6722,  tz:'Asia/Jakarta' },
+  { name:'Bangalore',   country:'Ấn Độ',     flag:'🇮🇳', lat:12.9716,  lon:77.5946,  tz:'Asia/Kolkata' },
+  { name:'Chennai',     country:'Ấn Độ',     flag:'🇮🇳', lat:13.0827,  lon:80.2707,  tz:'Asia/Kolkata' },
+  { name:'Los Angeles', country:'Mỹ',        flag:'🇺🇸', lat:34.0522,  lon:-118.2437,tz:'America/Los_Angeles' },
+  { name:'São Paulo',   country:'Brazil',    flag:'🇧🇷', lat:-23.5505, lon:-46.6333, tz:'America/Sao_Paulo' },
+  { name:'Cairo',       country:'Ai Cập',    flag:'🇪🇬', lat:30.0444,  lon:31.2357,  tz:'Africa/Cairo' },
+  { name:'Cần Thơ',     country:'Việt Nam',  flag:'🇻🇳', lat:10.0452,  lon:105.7469, tz:'Asia/Ho_Chi_Minh' },
+  { name:'Nha Trang',   country:'Việt Nam',  flag:'🇻🇳', lat:12.2388,  lon:109.1967, tz:'Asia/Ho_Chi_Minh' },
+  { name:'Tuy Hòa',     country:'Việt Nam',  flag:'🇻🇳', lat:13.0880,  lon:109.3200, tz:'Asia/Ho_Chi_Minh' },
+];
+
+// WMO weather codes → emoji + description
+const WMO = {
+  0:['☀️','Trời quang'],1:['🌤️','Ít mây'],2:['⛅','Có mây'],3:['☁️','Nhiều mây'],
+  45:['🌫️','Có sương'],48:['🌫️','Sương đóng băng'],
+  51:['🌦️','Mưa phùn nhẹ'],53:['🌦️','Mưa phùn'],55:['🌧️','Mưa phùn dày'],
+  61:['🌧️','Mưa nhẹ'],63:['🌧️','Có mưa'],65:['🌧️','Mưa to'],
+  71:['🌨️','Tuyết nhẹ'],73:['❄️','Có tuyết'],75:['❄️','Tuyết dày'],
+  77:['🌨️','Hạt tuyết'],
+  80:['🌦️','Mưa rào nhẹ'],81:['🌧️','Mưa rào'],82:['⛈️','Mưa rào mạnh'],
+  85:['🌨️','Tuyết rào nhẹ'],86:['❄️','Tuyết rào mạnh'],
+  95:['⛈️','Giông bão'],96:['⛈️','Bão có mưa đá'],99:['⛈️','Bão lớn'],
+};
+
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let activeCities = [];
+let weatherCache = {};
+let countdown    = 60;
+let clockTimer   = null;
+
+// ══════════════════════════════════════════════════════════════
+//  CLOCK
+// ══════════════════════════════════════════════════════════════
+function getLocalTime(tz) {
+  try {
+    const now = new Date();
+    const time = new Intl.DateTimeFormat('vi-VN', {
+      timeZone:tz, hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+    }).format(now);
+    const date = new Intl.DateTimeFormat('vi-VN', {
+      timeZone:tz, weekday:'short', day:'2-digit', month:'2-digit'
+    }).format(now);
+    return { time, date };
+  } catch(_) {
+    return { time:'--:--:--', date:'--/--' };
+  }
+}
+
+function tickClocks() {
+  document.querySelectorAll('[data-tz]').forEach(el => {
+    const tz = el.dataset.tz;
+    const { time, date } = getLocalTime(tz);
+    const clockEl = el.querySelector('.clock');
+    const dateEl  = el.querySelector('.clock-date');
+    if (clockEl) clockEl.textContent = time;
+    if (dateEl)  dateEl.textContent  = date;
+  });
+  document.getElementById('ts-bar').textContent =
+    new Date().toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ══════════════════════════════════════════════════════════════
+//  WEATHER API (Open-Meteo — no key needed)
+// ══════════════════════════════════════════════════════════════
+async function fetchWeather(city) {
+  const url = `https://api.open-meteo.com/v1/forecast?`+
+    `latitude=${city.lat}&longitude=${city.lon}`+
+    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,`+
+    `precipitation,weather_code,wind_speed_10m`+
+    `&hourly=temperature_2m,weather_code`+
+    `&forecast_days=1&timezone=${encodeURIComponent(city.tz)}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('API error');
+  return r.json();
+}
+
+async function fetchGeocode(query) {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=vi`;
+  const r = await fetch(url);
+  const j = await r.json();
+  return j.results || [];
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TEMP COLOR
+// ══════════════════════════════════════════════════════════════
+function tempClass(t) {
+  if (t >= 35) return 'hot';
+  if (t >= 28) return 'warm';
+  if (t >= 18) return 'mild';
+  if (t >= 8)  return 'cool';
+  return 'cold';
+}
+function tempTint(t) {
+  if (t >= 35) return '#ef4444';
+  if (t >= 28) return '#f97316';
+  if (t >= 18) return '#22c55e';
+  if (t >= 8)  return '#38bdf8';
+  return '#818cf8';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TIMEZONE OFFSET HELPER
+// ══════════════════════════════════════════════════════════════
+function getUTCOffset(tz) {
+  try {
+    const now = new Date();
+    // Get UTC offset in minutes by comparing UTC time to local time in that tz
+    const utcStr  = new Intl.DateTimeFormat('en',{timeZone:'UTC',   hour:'numeric',minute:'numeric',hour12:false}).format(now);
+    const tzStr   = new Intl.DateTimeFormat('en',{timeZone:tz,      hour:'numeric',minute:'numeric',hour12:false}).format(now);
+    const [uh,um] = utcStr.split(':').map(Number);
+    const [th,tm] = tzStr.split(':').map(Number);
+    let diff = (th*60+tm) - (uh*60+um);
+    if (diff > 720)  diff -= 1440;
+    if (diff < -720) diff += 1440;
+    const sign = diff >= 0 ? '+' : '-';
+    const abs  = Math.abs(diff);
+    const h    = String(Math.floor(abs/60)).padStart(2,'0');
+    const m    = String(abs%60).padStart(2,'0');
+    // Timezone abbreviation
+    const abbr = new Intl.DateTimeFormat('en',{timeZone:tz,timeZoneName:'short'})
+      .format(now).split(', ').pop() || tz.split('/').pop().replace('_',' ');
+    return { offset:`UTC${sign}${h}:${m}`, abbr, diff };
+  } catch(_) {
+    return { offset:'UTC', abbr:'UTC', diff:0 };
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER CARD
+// ══════════════════════════════════════════════════════════════
+function renderCard(city, data) {
+  const el = document.getElementById('card-' + city.id);
+  if (!el) return;
+
+  const c = data.current;
+  const temp   = Math.round(c.temperature_2m);
+  const feels  = Math.round(c.apparent_temperature);
+  const humid  = c.relative_humidity_2m;
+  const wind   = Math.round(c.wind_speed_10m);
+  const precip = c.precipitation;
+  const code   = c.weather_code;
+  const [emoji, desc] = WMO[code] || ['🌡️','Không rõ'];
+
+  // Mini forecast (next 6 hours)
+  const now = new Date();
+  const nowH = now.getHours();
+  const hourlyTemps = data.hourly.temperature_2m || [];
+  const hourlyCodes = data.hourly.weather_code   || [];
+  const hourlyTimes = data.hourly.time           || [];
+  const forecastItems = [];
+  let count = 0;
+  for (let i = 0; i < hourlyTimes.length && count < 6; i++) {
+    const hDate = new Date(hourlyTimes[i]);
+    if (hDate > now) {
+      const hEmoji = (WMO[hourlyCodes[i]] || ['🌡️'])[0];
+      const hTime  = hDate.toLocaleTimeString('vi-VN',{timeZone:city.tz,hour:'2-digit',minute:'2-digit',hour12:false});
+      forecastItems.push(`
+        <div class="mf-item">
+          <div class="mf-hour">${hTime}</div>
+          <div class="mf-icon">${hEmoji}</div>
+          <div class="mf-temp">${Math.round(hourlyTemps[i])}°</div>
+        </div>`);
+      count++;
+    }
+  }
+
+  const tc   = tempClass(temp);
+  const tint = tempTint(temp);
+  const { time, date } = getLocalTime(city.tz);
+  const { offset, abbr, diff } = getUTCOffset(city.tz);
+
+  // Diff vs Vietnam (UTC+7)
+  const vnDiff = diff - 420; // 420 = 7*60
+  const vnDiffStr = vnDiff === 0
+    ? 'Cùng giờ VN'
+    : (vnDiff > 0 ? `+${vnDiff/60 % 1 === 0 ? vnDiff/60 : (vnDiff/60).toFixed(1)}h so với VN`
+                  : `${vnDiff/60 % 1 === 0 ? vnDiff/60 : (vnDiff/60).toFixed(1)}h so với VN`);
+
+  el.style.setProperty('--card-tint', tint);
+  el.innerHTML = `
+    <button class="remove-btn" onclick="removeCity('${city.id}')" title="Xóa">✕</button>
+    <div class="card-top">
+      <div class="city-info">
+        <div class="city-name">${city.flag} ${city.name}</div>
+        <div class="country-name">${city.country}</div>
+      </div>
+      <div class="weather-emoji">${emoji}</div>
+    </div>
+    <div class="clock" data-clock>${time}</div>
+    <div class="clock-date">${date}</div>
+    <div class="tz-info-row">
+      <span class="tz-pill tz-offset">${offset}</span>
+      <span class="tz-pill tz-abbr">${abbr}</span>
+      <span class="tz-pill tz-vn ${vnDiff===0?'tz-same':vnDiff>0?'tz-ahead':'tz-behind'}">${vnDiffStr}</span>
+    </div>
+    <div class="card-divider"></div>
+    <div class="weather-row">
+      <div class="temp-big ${tc}">${temp}°<span style="font-size:.5em;opacity:.6">C</span></div>
+      <div class="weather-details">
+        <div class="wd-row">🤔 <span>Cảm giác</span><span>${feels}°C</span></div>
+        <div class="wd-row">💧 <span>Độ ẩm</span><span>${humid}%</span></div>
+        <div class="wd-row">💨 <span>Gió</span><span>${wind} km/h</span></div>
+        ${precip > 0 ? `<div class="wd-row">🌧 <span>Mưa</span><span>${precip}mm</span></div>` : ''}
+      </div>
+    </div>
+    <div class="weather-desc">${desc}</div>
+    ${forecastItems.length ? `<div class="mini-forecast">${forecastItems.join('')}</div>` : ''}
+  `;
+  el.setAttribute('data-tz', city.tz);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LOAD CITY CARD
+// ══════════════════════════════════════════════════════════════
+async function loadCity(city) {
+  const grid = document.getElementById('cards-grid');
+  const existing = document.getElementById('card-' + city.id);
+  if (!existing) {
+    const card = document.createElement('div');
+    card.className = 'wcard';
+    card.id = 'card-' + city.id;
+    const { time, date } = getLocalTime(city.tz);
+    card.setAttribute('data-tz', city.tz);
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="city-info">
+          <div class="city-name">${city.flag} ${city.name}</div>
+          <div class="country-name">${city.country}</div>
+        </div>
+      </div>
+      <div class="clock">${time}</div>
+      <div class="clock-date">${date}</div>
+      <div class="card-loading"><span class="spin"></span>Đang tải…</div>`;
+    grid.appendChild(card);
+  }
+
+  try {
+    const data = await fetchWeather(city);
+    weatherCache[city.id] = data;
+    renderCard(city, data);
+  } catch(e) {
+    const el = document.getElementById('card-' + city.id);
+    if (el) el.querySelector('.card-loading')
+      && (el.innerHTML += '<div style="color:var(--red);font-size:.74rem;margin-top:8px">⚠ Lỗi tải dữ liệu</div>');
+    console.error(city.name, e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ADD / REMOVE
+// ══════════════════════════════════════════════════════════════
+function cityId(city) {
+  return (city.name + city.lat + city.lon).replace(/[^a-z0-9]/gi,'_').toLowerCase();
+}
+
+function addCity(cityData) {
+  const id = cityId(cityData);
+  if (activeCities.find(c => c.id === id)) return;
+  const city = { ...cityData, id };
+  activeCities.push(city);
+  updateQuickChips();
+  loadCity(city);
+  saveState();
+}
+
+function removeCity(id) {
+  activeCities = activeCities.filter(c => c.id !== id);
+  const el = document.getElementById('card-' + id);
+  if (el) { el.style.animation='cardOut .3s ease forwards'; setTimeout(()=>el.remove(),300); }
+  updateQuickChips();
+  saveState();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  REFRESH ALL
+// ══════════════════════════════════════════════════════════════
+async function refreshAll() {
+  const btn = document.getElementById('ref-btn');
+  btn.classList.add('spin-btn');
+  await Promise.all(activeCities.map(loadCity));
+  btn.classList.remove('spin-btn');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SEARCH
+// ══════════════════════════════════════════════════════════════
+const searchInput = document.getElementById('search-input');
+const acBox       = document.getElementById('autocomplete');
+
+searchInput.addEventListener('input', async () => {
+  const q = searchInput.value.trim().toLowerCase();
+  if (q.length < 2) { acBox.classList.remove('show'); return; }
+
+  // local first
+  let results = SEARCH_DB.filter(c =>
+    c.name.toLowerCase().includes(q) || c.country.toLowerCase().includes(q)
+  ).slice(0, 5);
+
+  // then geocode API
+  if (results.length < 3) {
+    try {
+      const geo = await fetchGeocode(q);
+      geo.forEach(g => {
+        if (!results.find(r => Math.abs(r.lat - g.latitude) < 0.1)) {
+          results.push({
+            name: g.name,
+            country: g.country || '',
+            flag: '🌍',
+            lat: g.latitude,
+            lon: g.longitude,
+            tz: g.timezone || 'UTC',
+          });
+        }
+      });
+    } catch(_){}
+  }
+
+  if (!results.length) { acBox.classList.remove('show'); return; }
+
+  acBox.innerHTML = results.map((c,i) => `
+    <div class="ac-item" onclick="selectCity(${i})">
+      <span class="ac-flag">${c.flag}</span>
+      <span class="ac-name">${c.name}</span>
+      <span class="ac-sub">${c.country}</span>
+    </div>`).join('');
+  acBox._results = results;
+  acBox.classList.add('show');
+});
+
+function selectCity(i) {
+  const city = acBox._results[i];
+  if (city) addCity(city);
+  searchInput.value = '';
+  acBox.classList.remove('show');
+}
+
+async function searchCity() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+  const geo = await fetchGeocode(q);
+  if (geo.length) {
+    addCity({
+      name: geo[0].name,
+      country: geo[0].country || '',
+      flag: '🌍',
+      lat: geo[0].latitude,
+      lon: geo[0].longitude,
+      tz: geo[0].timezone || 'UTC',
+    });
+    searchInput.value = '';
+    acBox.classList.remove('show');
+  }
+}
+searchInput.addEventListener('keydown', e => { if(e.key==='Enter') searchCity(); });
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) acBox.classList.remove('show');
+});
+
+// ══════════════════════════════════════════════════════════════
+//  QUICK ADD CHIPS
+// ══════════════════════════════════════════════════════════════
+function updateQuickChips() {
+  const wrap = document.getElementById('quick-add');
+  const chips = [
+    { label:'📍 Vị trí của tôi', action:'geo' },
+    ...DEFAULT_CITIES.map(c => ({ label:`${c.flag} ${c.name}`, city:c }))
+  ];
+  wrap.innerHTML = chips.map(ch => {
+    if (ch.action === 'geo') {
+      return `<div class="qa-chip" onclick="addMyLocation()">📍 Vị trí của tôi</div>`;
+    }
+    const id = cityId(ch.city);
+    const active = activeCities.find(c => c.id === id);
+    return `<div class="qa-chip ${active?'active':''}" onclick="toggleCity(${JSON.stringify(ch.city).replace(/"/g,'&quot;')})">${ch.label}</div>`;
+  }).join('');
+}
+
+function toggleCity(city) {
+  const id = cityId(city);
+  if (activeCities.find(c => c.id === id)) removeCity(id);
+  else addCity(city);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GEOLOCATION
+// ══════════════════════════════════════════════════════════════
+function addMyLocation() {
+  if (!navigator.geolocation) { alert('Trình duyệt không hỗ trợ vị trí.'); return; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude:lat, longitude:lon } = pos.coords;
+    // Reverse geocode via open-meteo geocoding
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      addCity({ name:'Vị trí của tôi', country:'📍', flag:'📍', lat, lon, tz });
+    } catch(e) {
+      addCity({ name:'Vị trí của tôi', country:'', flag:'📍', lat, lon, tz:'Asia/Ho_Chi_Minh' });
+    }
+  }, () => alert('Không lấy được vị trí. Vui lòng cho phép truy cập vị trí.'));
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PERSIST STATE
+// ══════════════════════════════════════════════════════════════
+function saveState() {
+  try {
+    sessionStorage.setItem('weather_cities', JSON.stringify(
+      activeCities.map(c => ({ name:c.name, country:c.country, flag:c.flag, lat:c.lat, lon:c.lon, tz:c.tz }))
+    ));
+  } catch(_){}
+}
+
+function loadState() {
+  try {
+    const saved = sessionStorage.getItem('weather_cities');
+    if (saved) {
+      const cities = JSON.parse(saved);
+      cities.forEach(c => addCity(c));
+      return true;
+    }
+  } catch(_){}
+  return false;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+// CSS for card removal animation
+const style = document.createElement('style');
+style.textContent = `@keyframes cardOut{to{opacity:0;transform:scale(.92)translateY(8px)}}`;
+document.head.appendChild(style);
+
+updateQuickChips();
+
+// Load saved or default
+const hadSaved = loadState();
+if (!hadSaved) {
+  // Load first 8 default cities
+  DEFAULT_CITIES.slice(0, 8).forEach(c => addCity(c));
+}
+
+// Clock tick every second
+clockTimer = setInterval(tickClocks, 1000);
+
+// Weather refresh every 60s
+setInterval(() => {
+  countdown--;
+  if (countdown <= 0) { countdown = 60; refreshAll(); }
+  document.getElementById('cd-bar').textContent = countdown;
+}, 1000);
+</script>
+</body>
+</html>
